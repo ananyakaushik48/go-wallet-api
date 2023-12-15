@@ -8,8 +8,8 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
+	"os"
 
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/gin-gonic/gin"
@@ -53,7 +53,7 @@ func main() {
 		}
 
 		// Write the encrypted key to a file
-		err = ioutil.WriteFile(fmt.Sprintf("UserKeys/%s.key", req.UserID), encryptedKey, 0644)
+		err = os.WriteFile(fmt.Sprintf("UserKeys/%s.key", req.UserID), encryptedKey, 0644)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to write key to file"})
 			return
@@ -61,11 +61,11 @@ func main() {
 
 		// Return the public key
 		c.JSON(http.StatusOK, gin.H{
-			"userId":    req.UserID,
-			"publicKey": crypto.PubkeyToAddress(key.PublicKey).Hex(),
-			"privateKey":  hex.EncodeToString(privateKey), // Return the original private key as hex string
-            "encryptedPrivateKey": hex.EncodeToString(encryptedKey), // Also return the encrypted private key
-        })
+			"userId":              req.UserID,
+			"publicKey":           crypto.PubkeyToAddress(key.PublicKey).Hex(),
+			"privateKey":          hex.EncodeToString(privateKey),   // Return the original private key as hex string
+			"encryptedPrivateKey": hex.EncodeToString(encryptedKey), // Also return the encrypted private key
+		})
 	})
 
 	// Define the '/decrypt-secret' endpoint
@@ -77,7 +77,7 @@ func main() {
 		}
 
 		// Read the encrypted key from file
-		encryptedKey, err := ioutil.ReadFile(fmt.Sprintf("UserKeys/%s.key", req.UserID))
+		encryptedKey, err := os.ReadFile(fmt.Sprintf("UserKeys/%s.key", req.UserID))
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to read key from file"})
 			return
@@ -97,6 +97,10 @@ func main() {
 		})
 	})
 
+	// Defining the '/create-email-secret' endpoint
+	r.POST("/create-email-secret", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"data": ""})
+	})
 	// Run the server
 	r.Run(":8080")
 }
@@ -149,3 +153,14 @@ func decrypt(data []byte, passphrase string) ([]byte, error) {
 	nonce, ciphertext := data[:nonceSize], data[nonceSize:]
 	return gcm.Open(nil, nonce, ciphertext, nil)
 }
+
+/**
+* Email string encryption function
+ */
+func generateEmailStringAES256() {
+
+}
+
+/**
+* Function that appends a generated hash to the
+ */
